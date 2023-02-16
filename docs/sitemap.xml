@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://venite-xjc.github.io/veniteBlog/posts/first-post/</loc>
+    <lastmod>2023-01-26T01:50:11+08:00</lastmod>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/</loc>
+    <lastmod>2023-01-26T01:50:11+08:00</lastmod>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/posts/</loc>
+    <lastmod>2023-01-26T01:50:11+08:00</lastmod>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/posts/md4_swintransformer/</loc>
+    <lastmod>2022-11-26T01:50:11+08:00</lastmod>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/posts/md3_vit/</loc>
+    <lastmod>2022-11-26T01:50:11+08:00</lastmod>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/posts/md1_attention_is_all_you_need/</loc>
+    <lastmod>2022-11-26T01:50:11+08:00</lastmod>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/posts/md2_non_local_gcnet/</loc>
+    <lastmod>2022-11-26T01:50:11+08:00</lastmod>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/categories/</loc>
+  </url><url>
+    <loc>https://venite-xjc.github.io/veniteBlog/tags/</loc>
+  </url>
+</urlset>
