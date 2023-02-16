@@ -1,6 +1,0 @@
-baseURL = 'https://venite-xjc.github.io/'
-languageCode = 'en-us'
-title = 'My Blog Site'
-theme = 'PaperMod'
-math = true
-publishDir = 'docs'

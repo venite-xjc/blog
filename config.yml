@@ -1,0 +1,7 @@
+baseURL : 'https://venite-xjc.github.io/'
+languageCode : 'en-us'
+title : "Jetcat's Blog Site"
+theme : 'PaperMod'
+math : true
+publishDir : 'docs'
+
