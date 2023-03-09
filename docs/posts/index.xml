@@ -2,27 +2,27 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Posts on Jetcat&#39;s Blog Site</title>
-    <link>https://venite-xjc.github.io/posts/</link>
+    <link>https://venite-xjc.github.io/xjcblog/posts/</link>
     <description>Recent content in Posts on Jetcat&#39;s Blog Site</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 Jan 2023 01:50:11 +0800</lastBuildDate><atom:link href="https://venite-xjc.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 26 Jan 2023 01:50:11 +0800</lastBuildDate><atom:link href="https://venite-xjc.github.io/xjcblog/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Hi!</title>
-      <link>https://venite-xjc.github.io/posts/first-post/</link>
+      <link>https://venite-xjc.github.io/xjcblog/posts/first-post/</link>
       <pubDate>Thu, 26 Jan 2023 01:50:11 +0800</pubDate>
       
-      <guid>https://venite-xjc.github.io/posts/first-post/</guid>
+      <guid>https://venite-xjc.github.io/xjcblog/posts/first-post/</guid>
       <description>欢迎来到我的博客 我是一名大三本科生，专业是计算机科学与技术，同时对人工智能领域很有兴趣。
 我的学习方向包括：Transformer, NeRF, GAN, novel view synthesis, GSN。</description>
     </item>
     
     <item>
       <title>attention in CV 学习笔记：Swin Transformer及部分代码复现</title>
-      <link>https://venite-xjc.github.io/posts/md4_swintransformer/</link>
+      <link>https://venite-xjc.github.io/xjcblog/posts/md4_swintransformer/</link>
       <pubDate>Sat, 26 Nov 2022 01:50:11 +0800</pubDate>
       
-      <guid>https://venite-xjc.github.io/posts/md4_swintransformer/</guid>
+      <guid>https://venite-xjc.github.io/xjcblog/posts/md4_swintransformer/</guid>
       <description>Swin Transformer: Hierarchical Vision Transformer using Shifted Windows 论文地址: https://arxiv.org/abs/2103.14030 参考代码：https://github.com/microsoft/Swin-Transformer 2021 ICCV best paper，提出了一个Transformer的通用backbone
 远看是Transformer, 近看是CNN。
 Transformer in CV的问题 ViT出来之后，虽然follow它的工作很多，但是很少有人能够提出一个通用的骨干网络来解决CV的各种任务。作者认为Transformer转换到CV领域的主要困难来自NLP和CV两大领域的形态不同，比如：
@@ -39,10 +39,10 @@ $$\text{Attention}(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
     
     <item>
       <title>attention in CV 学习笔记：ViT</title>
-      <link>https://venite-xjc.github.io/posts/md3_vit/</link>
+      <link>https://venite-xjc.github.io/xjcblog/posts/md3_vit/</link>
       <pubDate>Sat, 26 Nov 2022 01:50:11 +0800</pubDate>
       
-      <guid>https://venite-xjc.github.io/posts/md3_vit/</guid>
+      <guid>https://venite-xjc.github.io/xjcblog/posts/md3_vit/</guid>
       <description>AN IMAGE IS WORTH 16X16 WORDS: TRANSFORMERS FOR IMAGE RECOGNITION AT SCALE 论文地址：https://arxiv.org/abs/2010.11929 Transformer in CV 在这篇文章之前，已经有很多工作是关于如何把attention应用到CV任务上，有的是把attention添加到模型里面，要么是替换掉一些CNN的组件。但是很少有任务是把纯attention网络应用到CV上的。
 而在NLP领域，Transformer已经成为了主流方法，由于Transformer的long-range和缺乏归纳偏置的特性，Transformer通常是需要在超大规模数据集上进行预训练然后在小规模数据集上fine-tune。同时，Transformer至今没有出现性能饱和的现象，这就让我们在超大规模数据集上训练一个超大模型成为可能。
 鉴于CV领域并没有有效地推广Transformer，作者希望能够在尽量少的改变标准的Transformer的情况下把Transformer应用到CV领域。
@@ -60,10 +60,10 @@ Transformer针对这个问题采用的就是划分patch的方法，把patch替�
     
     <item>
       <title>attention in CV学习笔记：Attention is All you Need</title>
-      <link>https://venite-xjc.github.io/posts/md1_attention_is_all_you_need/</link>
+      <link>https://venite-xjc.github.io/xjcblog/posts/md1_attention_is_all_you_need/</link>
       <pubDate>Sat, 26 Nov 2022 01:50:11 +0800</pubDate>
       
-      <guid>https://venite-xjc.github.io/posts/md1_attention_is_all_you_need/</guid>
+      <guid>https://venite-xjc.github.io/xjcblog/posts/md1_attention_is_all_you_need/</guid>
       <description>从NLP到CV，attention机制以及Transformer模型近几年大放异彩，大有一统江湖之势。Transformer作为一个long-range模型，一方面相对于CNN在很多需要全局信息的任务上更加有优势，另一方面具有统一NLP和CV的潜力，所以被人广泛研究（灌水）。作为一个深度学习方向的的实习生，在过去的一年零零散散看了不少attention的paper，但是始终对这个模型没有形成体系的认知，学习也颇为囫囵吞枣。所以希望重新整理一下自己看过的paper，同时记录一下自己的笔记。
 Attention is All you Need 论文地址：https://proceedings.neurips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf 参考代码：https://github.com/jadore801120/attention-is-all-you-need-pytorch 这篇首先提出了Transformer这个完全依赖注意力机制的模型结构。
 啥叫self-attention? Self-attention, sometimes called intra-attention is an attention mechanism relating different positions of a single sequence in order to compute a representation of the sequence.
@@ -74,10 +74,10 @@ self-attention是一种把单个序列的不同位置关联起来来计算序列
     
     <item>
       <title>attention in CV学习笔记：Non-local Net 与 GCNet</title>
-      <link>https://venite-xjc.github.io/posts/md2_non_local_gcnet/</link>
+      <link>https://venite-xjc.github.io/xjcblog/posts/md2_non_local_gcnet/</link>
       <pubDate>Sat, 26 Nov 2022 01:50:11 +0800</pubDate>
       
-      <guid>https://venite-xjc.github.io/posts/md2_non_local_gcnet/</guid>
+      <guid>https://venite-xjc.github.io/xjcblog/posts/md2_non_local_gcnet/</guid>
       <description>Non-local Neural Networks 论文地址：https://openaccess.thecvf.com/content_cvpr_2018/html/Wang_Non-Local_Neural_Networks_CVPR_2018_paper.html 感觉这篇算视觉领域引入attention的先例了，主要的工作就是介绍了什么是non-local，non-local的技术细节，以及non-local在具体任务中的实现。
 什么是non-local? 这篇文章是受到non-local mean算法的启发，定义了一个non-local operation，原文中定义是这样的：
 In this paper, we present non-local operations as a generic family of building blocks for capturing long-range dependencies. Inspired by the classical non-local means method in computer vision, our non-local operation computes the response at a position as a weighted sum of the features at all positions.

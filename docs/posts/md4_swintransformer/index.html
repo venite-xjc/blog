@@ -20,15 +20,15 @@ A×B大小的矩阵和B×C大小的矩阵相乘计算复杂度为ABC，在self-a
 $$\text{Attention}(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 对于分辨率(patch数量)为$h \times w$的特征图，它的输入为$hw\times C$，首先需要经过三个$C\times C$的矩阵分别得到Q，K，V，那么复杂度一共就为$3hwC^2$。 计算$QK^T$的时候，是$hw\times C$的矩阵和$C\times hw$的矩阵相乘，计算复杂度为$(hw)^2C$。 计算$(QK^T)V$的时候，是$hw\times hw$的矩阵和$hw\times C$的矩阵相乘，计算复杂度为$(hw)^2C$。 在输出的时候还需要经过一次线性变换，乘上一个$C\times C$的矩阵，计算复杂度为$hwC^2$。">
 <meta name="author" content="">
-<link rel="canonical" href="https://venite-xjc.github.io/posts/md4_swintransformer/">
-<link crossorigin="anonymous" href="/assets/css/stylesheet.bccfefac377bc340f06c260aed1bddf49a4354816d7c570d6aac75a997986c95.css" integrity="sha256-vM/vrDd7w0DwbCYK7Rvd9JpDVIFtfFcNaqx1qZeYbJU=" rel="preload stylesheet" as="style">
-<script defer crossorigin="anonymous" src="/assets/js/highlight.f413e19d0714851f6474e7ee9632408e58ac146fbdbe62747134bea2fa3415e0.js" integrity="sha256-9BPhnQcUhR9kdOfuljJAjlisFG&#43;9vmJ0cTS&#43;ovo0FeA="
+<link rel="canonical" href="https://venite-xjc.github.io/xjcblog/posts/md4_swintransformer/">
+<link crossorigin="anonymous" href="/xjcblog/assets/css/stylesheet.bccfefac377bc340f06c260aed1bddf49a4354816d7c570d6aac75a997986c95.css" integrity="sha256-vM/vrDd7w0DwbCYK7Rvd9JpDVIFtfFcNaqx1qZeYbJU=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/xjcblog/assets/js/highlight.f413e19d0714851f6474e7ee9632408e58ac146fbdbe62747134bea2fa3415e0.js" integrity="sha256-9BPhnQcUhR9kdOfuljJAjlisFG&#43;9vmJ0cTS&#43;ovo0FeA="
     onload="hljs.initHighlightingOnLoad();"></script>
-<link rel="icon" href="https://venite-xjc.github.io/favicon.ico">
-<link rel="icon" type="image/png" sizes="16x16" href="https://venite-xjc.github.io/favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="https://venite-xjc.github.io/favicon-32x32.png">
-<link rel="apple-touch-icon" href="https://venite-xjc.github.io/apple-touch-icon.png">
-<link rel="mask-icon" href="https://venite-xjc.github.io/safari-pinned-tab.svg">
+<link rel="icon" href="https://venite-xjc.github.io/xjcblog/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://venite-xjc.github.io/xjcblog/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://venite-xjc.github.io/xjcblog/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://venite-xjc.github.io/xjcblog/apple-touch-icon.png">
+<link rel="mask-icon" href="https://venite-xjc.github.io/xjcblog/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
 <noscript>
@@ -104,7 +104,7 @@ A×B大小的矩阵和B×C大小的矩阵相乘计算复杂度为ABC，在self-a
 $$\text{Attention}(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 对于分辨率(patch数量)为$h \times w$的特征图，它的输入为$hw\times C$，首先需要经过三个$C\times C$的矩阵分别得到Q，K，V，那么复杂度一共就为$3hwC^2$。 计算$QK^T$的时候，是$hw\times C$的矩阵和$C\times hw$的矩阵相乘，计算复杂度为$(hw)^2C$。 计算$(QK^T)V$的时候，是$hw\times hw$的矩阵和$hw\times C$的矩阵相乘，计算复杂度为$(hw)^2C$。 在输出的时候还需要经过一次线性变换，乘上一个$C\times C$的矩阵，计算复杂度为$hwC^2$。" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://venite-xjc.github.io/posts/md4_swintransformer/" /><meta property="article:section" content="posts" />
+<meta property="og:url" content="https://venite-xjc.github.io/xjcblog/posts/md4_swintransformer/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2022-11-26T01:50:11+08:00" />
 <meta property="article:modified_time" content="2022-11-26T01:50:11+08:00" />
 
@@ -128,18 +128,18 @@ $$\text{Attention}(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
-  "itemListElement": [
-    {
-      "@type": "ListItem",
-      "position":  1 ,
-      "name": "Posts",
-      "item": "https://venite-xjc.github.io/posts/"
-    }, 
+  "itemListElement": [, 
     {
       "@type": "ListItem",
       "position":  2 ,
+      "name": "Posts",
+      "item": "https://venite-xjc.github.io/xjcblog/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
       "name": "attention in CV 学习笔记：Swin Transformer及部分代码复现",
-      "item": "https://venite-xjc.github.io/posts/md4_swintransformer/"
+      "item": "https://venite-xjc.github.io/xjcblog/posts/md4_swintransformer/"
     }
   ]
 }
@@ -161,14 +161,14 @@ $$\text{Attention}(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
   "dateModified": "2022-11-26T01:50:11+08:00",
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "https://venite-xjc.github.io/posts/md4_swintransformer/"
+    "@id": "https://venite-xjc.github.io/xjcblog/posts/md4_swintransformer/"
   },
   "publisher": {
     "@type": "Organization",
     "name": "Jetcat's Blog Site",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://venite-xjc.github.io/favicon.ico"
+      "url": "https://venite-xjc.github.io/xjcblog/favicon.ico"
     }
   }
 }
@@ -190,7 +190,7 @@ $$\text{Attention}(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://venite-xjc.github.io/" accesskey="h" title="Jetcat&#39;s Blog Site (Alt + H)">Jetcat&#39;s Blog Site</a>
+            <a href="https://venite-xjc.github.io/xjcblog" accesskey="h" title="Jetcat&#39;s Blog Site (Alt + H)">Jetcat&#39;s Blog Site</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -542,7 +542,7 @@ swin实现了在这种dense prediction任务上采用Transformer的backbone，�
     </main>
     
 <footer class="footer">
-    <span>&copy; 2023 <a href="https://venite-xjc.github.io/">Jetcat&#39;s Blog Site</a></span>
+    <span>&copy; 2023 <a href="https://venite-xjc.github.io/xjcblog">Jetcat&#39;s Blog Site</a></span>
     <span>
         Powered by
         <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
