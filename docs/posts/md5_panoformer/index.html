@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>attention in CV 学习笔记：PanoFormer | Jetcat&#39;s Blog Site</title>
+<meta name="keywords" content="">
+<meta name="description" content="attention in CV 学习笔记：PanoFormer 回顾一下ViT和Swin，可以发现图像中应用attention机制的一个很重要的部分就是patch，或者说token。ViT关注的是patch与patch之间的注意力，而Swin则利用了卷积的结构，将注意力机制放在了局部的patch的内部。因此，patch作为attention的基本单位，无疑具有很大的研究潜力。反过来思考一下，虽然swin及其变体通过patch内部的attention取得了很大的成功，但是patch的形态反而限制了attention的性能，我们可以通过改造patch来引入归纳偏置来帮助模型学习。
+PanoFormer: Panorama Transformer for Indoor 360° Depth Estimation 论文地址：https://arxiv.org/abs/2203.09283 参考代码：https://github.com/zhijieshen-bjtu/PanoFormer 背景介绍 基于CNN的深度学习的方式在普通深度估计上取得了很好的效果。然而，如果要对全景照片进行深度估计，CNN效果就不是很好。这是由于全景照片是基于EPR进行投影过的，在图像的上下两端会造成非常巨大的形变。CNN在这种任务上有一种巨大的劣势：卷积的感受野是固定的，也就导致CNN只能螺蛳壳里做道场，被动地想办法去移除形变造成的影响，例如SphereNet。(虽然当时，我觉得SphereNet是一篇不错的工作)
+PanoFormer的作者则反其道而行之，为什么不能让算子来适配图片的形变呢，例如Deformable CNN。这就要求最好能够找到一种没有归纳偏置的算子，而Transformer就是一个很好的选择。因此，PanoFormer的核心思想就是，让Transformer去寻找一个非规则的patch然后计算attention。
+如何选取patch? 本文的核心在于三点：
+pixel-level patch division strategy relative position embedding method panoramic self-attention mechanism ViT这种模型会直接把图片分成$16\times16$的patch，这样在全景图上会损失很多细节，不利于密集预测。所以文章采用的分割算法是与patch的中心位置相关的。在这篇文章中，作者采用了一个$3\times3$的patch，也就是8个pixels环绕中心pixel。所以整个patch可以定义为中心点的位置和中心点到其他八个点的相对位置。
+那么问题变成了，以知一个中心点位置和一张panorama，如何找到剩余8个点。由于panorama是从球面上投影到平面上的，所以我们在球面上的取得一个patch是近似没有变形的。因此，流程变为：
+将中心点投影回球面 在球面上找以该点为中心的patch 在patch上找8个对应点 找到这8个点在panorama上的对应点 球面为$S^2$，对于任一点$S_(x, y)=(\theta, \phi)$对其周围的8个点的定义为： $$ S(\pm 1, 0)=(\theta\pm \Delta\theta, \phi)\\ S(0, \pm1) = (\theta, \phi\pm\Delta\phi)\\ S(\pm1, \pm1)=(\theta\pm\Delta\theta, \phi\pm\Delta\phi) $$ 上面是论文中给出的公式，但是我实际上觉得这里存在一点问题，水平方向的临近点不能简单的用$\theta$的加减表示，实际寻找应该发生在切平面上，按照下图所示。
+按照这个方式，我们就可以得到许多非规则的patch的基础形状，之所以说是基础是因为网络在后面学习了一个$\Delta\theta$和$\Delta\phi$用于更精细的修正。有点DeformableCNN的感觉。我们可以构造出一个每个patch采样的基础位置函数$s$。
+PST Block 网络模型如下所示，是一个很简单的U-Net结构。 可以观察到，最关键的结构就是PST Block这个东西。 作者首先用LeFF替换了FFN。然后改造了multi-head attention结构。当一个$H\times W\times C$的特征图输入的时候，首先会展开$HW$成$N\times C(N=H\times W)$的形状，然后分别由全连接层生成$M(M=C/d)$个头的$Q\in\mathbb{R}^{N\times d}$和$V\in\mathbb{R}^{N\times d}$, $Q$经过一个全连接层得到$W\in\mathbb{R}^{N\times 9}$然后经由Softmax得到attention score $A$, 同理得到一个$\Delta s\in\mathbb{R}^{N\times 18}$。$\Delta s$也就是用于矫正patch选点位置的学习值。">
+<meta name="author" content="">
+<link rel="canonical" href="https://venite-xjc.github.io/blog/posts/md5_panoformer/">
+<link crossorigin="anonymous" href="/blog/assets/css/stylesheet.bccfefac377bc340f06c260aed1bddf49a4354816d7c570d6aac75a997986c95.css" integrity="sha256-vM/vrDd7w0DwbCYK7Rvd9JpDVIFtfFcNaqx1qZeYbJU=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/blog/assets/js/highlight.f413e19d0714851f6474e7ee9632408e58ac146fbdbe62747134bea2fa3415e0.js" integrity="sha256-9BPhnQcUhR9kdOfuljJAjlisFG&#43;9vmJ0cTS&#43;ovo0FeA="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://venite-xjc.github.io/blog/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://venite-xjc.github.io/blog/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://venite-xjc.github.io/blog/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://venite-xjc.github.io/blog/apple-touch-icon.png">
+<link rel="mask-icon" href="https://venite-xjc.github.io/blog/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css" integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js" integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+
+
+
+<meta property="og:title" content="attention in CV 学习笔记：PanoFormer" />
+<meta property="og:description" content="attention in CV 学习笔记：PanoFormer 回顾一下ViT和Swin，可以发现图像中应用attention机制的一个很重要的部分就是patch，或者说token。ViT关注的是patch与patch之间的注意力，而Swin则利用了卷积的结构，将注意力机制放在了局部的patch的内部。因此，patch作为attention的基本单位，无疑具有很大的研究潜力。反过来思考一下，虽然swin及其变体通过patch内部的attention取得了很大的成功，但是patch的形态反而限制了attention的性能，我们可以通过改造patch来引入归纳偏置来帮助模型学习。
+PanoFormer: Panorama Transformer for Indoor 360° Depth Estimation 论文地址：https://arxiv.org/abs/2203.09283 参考代码：https://github.com/zhijieshen-bjtu/PanoFormer 背景介绍 基于CNN的深度学习的方式在普通深度估计上取得了很好的效果。然而，如果要对全景照片进行深度估计，CNN效果就不是很好。这是由于全景照片是基于EPR进行投影过的，在图像的上下两端会造成非常巨大的形变。CNN在这种任务上有一种巨大的劣势：卷积的感受野是固定的，也就导致CNN只能螺蛳壳里做道场，被动地想办法去移除形变造成的影响，例如SphereNet。(虽然当时，我觉得SphereNet是一篇不错的工作)
+PanoFormer的作者则反其道而行之，为什么不能让算子来适配图片的形变呢，例如Deformable CNN。这就要求最好能够找到一种没有归纳偏置的算子，而Transformer就是一个很好的选择。因此，PanoFormer的核心思想就是，让Transformer去寻找一个非规则的patch然后计算attention。
+如何选取patch? 本文的核心在于三点：
+pixel-level patch division strategy relative position embedding method panoramic self-attention mechanism ViT这种模型会直接把图片分成$16\times16$的patch，这样在全景图上会损失很多细节，不利于密集预测。所以文章采用的分割算法是与patch的中心位置相关的。在这篇文章中，作者采用了一个$3\times3$的patch，也就是8个pixels环绕中心pixel。所以整个patch可以定义为中心点的位置和中心点到其他八个点的相对位置。
+那么问题变成了，以知一个中心点位置和一张panorama，如何找到剩余8个点。由于panorama是从球面上投影到平面上的，所以我们在球面上的取得一个patch是近似没有变形的。因此，流程变为：
+将中心点投影回球面 在球面上找以该点为中心的patch 在patch上找8个对应点 找到这8个点在panorama上的对应点 球面为$S^2$，对于任一点$S_(x, y)=(\theta, \phi)$对其周围的8个点的定义为： $$ S(\pm 1, 0)=(\theta\pm \Delta\theta, \phi)\\ S(0, \pm1) = (\theta, \phi\pm\Delta\phi)\\ S(\pm1, \pm1)=(\theta\pm\Delta\theta, \phi\pm\Delta\phi) $$ 上面是论文中给出的公式，但是我实际上觉得这里存在一点问题，水平方向的临近点不能简单的用$\theta$的加减表示，实际寻找应该发生在切平面上，按照下图所示。
+按照这个方式，我们就可以得到许多非规则的patch的基础形状，之所以说是基础是因为网络在后面学习了一个$\Delta\theta$和$\Delta\phi$用于更精细的修正。有点DeformableCNN的感觉。我们可以构造出一个每个patch采样的基础位置函数$s$。
+PST Block 网络模型如下所示，是一个很简单的U-Net结构。 可以观察到，最关键的结构就是PST Block这个东西。 作者首先用LeFF替换了FFN。然后改造了multi-head attention结构。当一个$H\times W\times C$的特征图输入的时候，首先会展开$HW$成$N\times C(N=H\times W)$的形状，然后分别由全连接层生成$M(M=C/d)$个头的$Q\in\mathbb{R}^{N\times d}$和$V\in\mathbb{R}^{N\times d}$, $Q$经过一个全连接层得到$W\in\mathbb{R}^{N\times 9}$然后经由Softmax得到attention score $A$, 同理得到一个$\Delta s\in\mathbb{R}^{N\times 18}$。$\Delta s$也就是用于矫正patch选点位置的学习值。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://venite-xjc.github.io/blog/posts/md5_panoformer/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="attention in CV 学习笔记：PanoFormer"/>
+<meta name="twitter:description" content="attention in CV 学习笔记：PanoFormer 回顾一下ViT和Swin，可以发现图像中应用attention机制的一个很重要的部分就是patch，或者说token。ViT关注的是patch与patch之间的注意力，而Swin则利用了卷积的结构，将注意力机制放在了局部的patch的内部。因此，patch作为attention的基本单位，无疑具有很大的研究潜力。反过来思考一下，虽然swin及其变体通过patch内部的attention取得了很大的成功，但是patch的形态反而限制了attention的性能，我们可以通过改造patch来引入归纳偏置来帮助模型学习。
+PanoFormer: Panorama Transformer for Indoor 360° Depth Estimation 论文地址：https://arxiv.org/abs/2203.09283 参考代码：https://github.com/zhijieshen-bjtu/PanoFormer 背景介绍 基于CNN的深度学习的方式在普通深度估计上取得了很好的效果。然而，如果要对全景照片进行深度估计，CNN效果就不是很好。这是由于全景照片是基于EPR进行投影过的，在图像的上下两端会造成非常巨大的形变。CNN在这种任务上有一种巨大的劣势：卷积的感受野是固定的，也就导致CNN只能螺蛳壳里做道场，被动地想办法去移除形变造成的影响，例如SphereNet。(虽然当时，我觉得SphereNet是一篇不错的工作)
+PanoFormer的作者则反其道而行之，为什么不能让算子来适配图片的形变呢，例如Deformable CNN。这就要求最好能够找到一种没有归纳偏置的算子，而Transformer就是一个很好的选择。因此，PanoFormer的核心思想就是，让Transformer去寻找一个非规则的patch然后计算attention。
+如何选取patch? 本文的核心在于三点：
+pixel-level patch division strategy relative position embedding method panoramic self-attention mechanism ViT这种模型会直接把图片分成$16\times16$的patch，这样在全景图上会损失很多细节，不利于密集预测。所以文章采用的分割算法是与patch的中心位置相关的。在这篇文章中，作者采用了一个$3\times3$的patch，也就是8个pixels环绕中心pixel。所以整个patch可以定义为中心点的位置和中心点到其他八个点的相对位置。
+那么问题变成了，以知一个中心点位置和一张panorama，如何找到剩余8个点。由于panorama是从球面上投影到平面上的，所以我们在球面上的取得一个patch是近似没有变形的。因此，流程变为：
+将中心点投影回球面 在球面上找以该点为中心的patch 在patch上找8个对应点 找到这8个点在panorama上的对应点 球面为$S^2$，对于任一点$S_(x, y)=(\theta, \phi)$对其周围的8个点的定义为： $$ S(\pm 1, 0)=(\theta\pm \Delta\theta, \phi)\\ S(0, \pm1) = (\theta, \phi\pm\Delta\phi)\\ S(\pm1, \pm1)=(\theta\pm\Delta\theta, \phi\pm\Delta\phi) $$ 上面是论文中给出的公式，但是我实际上觉得这里存在一点问题，水平方向的临近点不能简单的用$\theta$的加减表示，实际寻找应该发生在切平面上，按照下图所示。
+按照这个方式，我们就可以得到许多非规则的patch的基础形状，之所以说是基础是因为网络在后面学习了一个$\Delta\theta$和$\Delta\phi$用于更精细的修正。有点DeformableCNN的感觉。我们可以构造出一个每个patch采样的基础位置函数$s$。
+PST Block 网络模型如下所示，是一个很简单的U-Net结构。 可以观察到，最关键的结构就是PST Block这个东西。 作者首先用LeFF替换了FFN。然后改造了multi-head attention结构。当一个$H\times W\times C$的特征图输入的时候，首先会展开$HW$成$N\times C(N=H\times W)$的形状，然后分别由全连接层生成$M(M=C/d)$个头的$Q\in\mathbb{R}^{N\times d}$和$V\in\mathbb{R}^{N\times d}$, $Q$经过一个全连接层得到$W\in\mathbb{R}^{N\times 9}$然后经由Softmax得到attention score $A$, 同理得到一个$\Delta s\in\mathbb{R}^{N\times 18}$。$\Delta s$也就是用于矫正patch选点位置的学习值。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://venite-xjc.github.io/blog/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "attention in CV 学习笔记：PanoFormer",
+      "item": "https://venite-xjc.github.io/blog/posts/md5_panoformer/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "attention in CV 学习笔记：PanoFormer",
+  "name": "attention in CV 学习笔记：PanoFormer",
+  "description": "attention in CV 学习笔记：PanoFormer 回顾一下ViT和Swin，可以发现图像中应用attention机制的一个很重要的部分就是patch，或者说token。ViT关注的是patch与patch之间的注意力，而Swin则利用了卷积的结构，将注意力机制放在了局部的patch的内部。因此，patch作为attention的基本单位，无疑具有很大的研究潜力。反过来思考一下，虽然swin及其变体通过patch内部的attention取得了很大的成功，但是patch的形态反而限制了attention的性能，我们可以通过改造patch来引入归纳偏置来帮助模型学习。\nPanoFormer: Panorama Transformer for Indoor 360° Depth Estimation 论文地址：https://arxiv.org/abs/2203.09283 参考代码：https://github.com/zhijieshen-bjtu/PanoFormer 背景介绍 基于CNN的深度学习的方式在普通深度估计上取得了很好的效果。然而，如果要对全景照片进行深度估计，CNN效果就不是很好。这是由于全景照片是基于EPR进行投影过的，在图像的上下两端会造成非常巨大的形变。CNN在这种任务上有一种巨大的劣势：卷积的感受野是固定的，也就导致CNN只能螺蛳壳里做道场，被动地想办法去移除形变造成的影响，例如SphereNet。(虽然当时，我觉得SphereNet是一篇不错的工作)\nPanoFormer的作者则反其道而行之，为什么不能让算子来适配图片的形变呢，例如Deformable CNN。这就要求最好能够找到一种没有归纳偏置的算子，而Transformer就是一个很好的选择。因此，PanoFormer的核心思想就是，让Transformer去寻找一个非规则的patch然后计算attention。\n如何选取patch? 本文的核心在于三点：\npixel-level patch division strategy relative position embedding method panoramic self-attention mechanism ViT这种模型会直接把图片分成$16\\times16$的patch，这样在全景图上会损失很多细节，不利于密集预测。所以文章采用的分割算法是与patch的中心位置相关的。在这篇文章中，作者采用了一个$3\\times3$的patch，也就是8个pixels环绕中心pixel。所以整个patch可以定义为中心点的位置和中心点到其他八个点的相对位置。\n那么问题变成了，以知一个中心点位置和一张panorama，如何找到剩余8个点。由于panorama是从球面上投影到平面上的，所以我们在球面上的取得一个patch是近似没有变形的。因此，流程变为：\n将中心点投影回球面 在球面上找以该点为中心的patch 在patch上找8个对应点 找到这8个点在panorama上的对应点 球面为$S^2$，对于任一点$S_(x, y)=(\\theta, \\phi)$对其周围的8个点的定义为： $$ S(\\pm 1, 0)=(\\theta\\pm \\Delta\\theta, \\phi)\\\\ S(0, \\pm1) = (\\theta, \\phi\\pm\\Delta\\phi)\\\\ S(\\pm1, \\pm1)=(\\theta\\pm\\Delta\\theta, \\phi\\pm\\Delta\\phi) $$ 上面是论文中给出的公式，但是我实际上觉得这里存在一点问题，水平方向的临近点不能简单的用$\\theta$的加减表示，实际寻找应该发生在切平面上，按照下图所示。\n按照这个方式，我们就可以得到许多非规则的patch的基础形状，之所以说是基础是因为网络在后面学习了一个$\\Delta\\theta$和$\\Delta\\phi$用于更精细的修正。有点DeformableCNN的感觉。我们可以构造出一个每个patch采样的基础位置函数$s$。\nPST Block 网络模型如下所示，是一个很简单的U-Net结构。 可以观察到，最关键的结构就是PST Block这个东西。 作者首先用LeFF替换了FFN。然后改造了multi-head attention结构。当一个$H\\times W\\times C$的特征图输入的时候，首先会展开$HW$成$N\\times C(N=H\\times W)$的形状，然后分别由全连接层生成$M(M=C/d)$个头的$Q\\in\\mathbb{R}^{N\\times d}$和$V\\in\\mathbb{R}^{N\\times d}$, $Q$经过一个全连接层得到$W\\in\\mathbb{R}^{N\\times 9}$然后经由Softmax得到attention score $A$, 同理得到一个$\\Delta s\\in\\mathbb{R}^{N\\times 18}$。$\\Delta s$也就是用于矫正patch选点位置的学习值。",
+  "keywords": [
+    
+  ],
+  "articleBody": " attention in CV 学习笔记：PanoFormer 回顾一下ViT和Swin，可以发现图像中应用attention机制的一个很重要的部分就是patch，或者说token。ViT关注的是patch与patch之间的注意力，而Swin则利用了卷积的结构，将注意力机制放在了局部的patch的内部。因此，patch作为attention的基本单位，无疑具有很大的研究潜力。反过来思考一下，虽然swin及其变体通过patch内部的attention取得了很大的成功，但是patch的形态反而限制了attention的性能，我们可以通过改造patch来引入归纳偏置来帮助模型学习。\nPanoFormer: Panorama Transformer for Indoor 360° Depth Estimation 论文地址：https://arxiv.org/abs/2203.09283 参考代码：https://github.com/zhijieshen-bjtu/PanoFormer 背景介绍 基于CNN的深度学习的方式在普通深度估计上取得了很好的效果。然而，如果要对全景照片进行深度估计，CNN效果就不是很好。这是由于全景照片是基于EPR进行投影过的，在图像的上下两端会造成非常巨大的形变。CNN在这种任务上有一种巨大的劣势：卷积的感受野是固定的，也就导致CNN只能螺蛳壳里做道场，被动地想办法去移除形变造成的影响，例如SphereNet。(虽然当时，我觉得SphereNet是一篇不错的工作)\nPanoFormer的作者则反其道而行之，为什么不能让算子来适配图片的形变呢，例如Deformable CNN。这就要求最好能够找到一种没有归纳偏置的算子，而Transformer就是一个很好的选择。因此，PanoFormer的核心思想就是，让Transformer去寻找一个非规则的patch然后计算attention。\n如何选取patch? 本文的核心在于三点：\npixel-level patch division strategy relative position embedding method panoramic self-attention mechanism ViT这种模型会直接把图片分成$16\\times16$的patch，这样在全景图上会损失很多细节，不利于密集预测。所以文章采用的分割算法是与patch的中心位置相关的。在这篇文章中，作者采用了一个$3\\times3$的patch，也就是8个pixels环绕中心pixel。所以整个patch可以定义为中心点的位置和中心点到其他八个点的相对位置。\n那么问题变成了，以知一个中心点位置和一张panorama，如何找到剩余8个点。由于panorama是从球面上投影到平面上的，所以我们在球面上的取得一个patch是近似没有变形的。因此，流程变为：\n将中心点投影回球面 在球面上找以该点为中心的patch 在patch上找8个对应点 找到这8个点在panorama上的对应点 球面为$S^2$，对于任一点$S_(x, y)=(\\theta, \\phi)$对其周围的8个点的定义为： $$ S(\\pm 1, 0)=(\\theta\\pm \\Delta\\theta, \\phi)\\\\ S(0, \\pm1) = (\\theta, \\phi\\pm\\Delta\\phi)\\\\ S(\\pm1, \\pm1)=(\\theta\\pm\\Delta\\theta, \\phi\\pm\\Delta\\phi) $$ 上面是论文中给出的公式，但是我实际上觉得这里存在一点问题，水平方向的临近点不能简单的用$\\theta$的加减表示，实际寻找应该发生在切平面上，按照下图所示。\n按照这个方式，我们就可以得到许多非规则的patch的基础形状，之所以说是基础是因为网络在后面学习了一个$\\Delta\\theta$和$\\Delta\\phi$用于更精细的修正。有点DeformableCNN的感觉。我们可以构造出一个每个patch采样的基础位置函数$s$。\nPST Block 网络模型如下所示，是一个很简单的U-Net结构。 可以观察到，最关键的结构就是PST Block这个东西。 作者首先用LeFF替换了FFN。然后改造了multi-head attention结构。当一个$H\\times W\\times C$的特征图输入的时候，首先会展开$HW$成$N\\times C(N=H\\times W)$的形状，然后分别由全连接层生成$M(M=C/d)$个头的$Q\\in\\mathbb{R}^{N\\times d}$和$V\\in\\mathbb{R}^{N\\times d}$, $Q$经过一个全连接层得到$W\\in\\mathbb{R}^{N\\times 9}$然后经由Softmax得到attention score $A$, 同理得到一个$\\Delta s\\in\\mathbb{R}^{N\\times 18}$。$\\Delta s$也就是用于矫正patch选点位置的学习值。\n在得到了$s$和$\\Delta s$之后，我们就可以根据$s+\\Delta s$来在$V$上面采样了。对于每个头采样出来$H\\times W$个patch每个patch包含9个点，可以理解为原本每个位置的特征深度变为原来的9倍。然后通过把patch和权重$A$矩阵相乘得到结果，和计算attention的原理一致，计算方法如下： $$ \\text{PSA}(f, \\hat{s})=\\sum^M_{m=1} W_m\\times \\left[\\sum^{H\\times W}{q=1}\\sum^9{k=1}A_{mqk}\\times W^{’}mf(\\hat{s}{mqk}+\\Delta s_{mqk}) \\right] $$ 解读一下上式，m代表某个head，q代表某个patch，k代表patch中的某个点。对于每个头之间都有权重$W_m$，在一个头的计算之中，首先需要遍历所有的$H\\times W$和点，也就是遍历所有的patch来计算，然后patch之内还要遍历所有的9个点。$A_{mqk}$就是每个头的每个patch的每个点的权重，$f$是用于采样patch的函数。\n",
+  "wordCount" : "95",
+  "inLanguage": "en",
+  "datePublished": "0001-01-01T00:00:00Z",
+  "dateModified": "0001-01-01T00:00:00Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://venite-xjc.github.io/blog/posts/md5_panoformer/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Jetcat's Blog Site",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://venite-xjc.github.io/blog/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://venite-xjc.github.io/blog/" accesskey="h" title="Jetcat&#39;s Blog Site (Alt + H)">Jetcat&#39;s Blog Site</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      attention in CV 学习笔记：PanoFormer
+    </h1>
+    <div class="post-meta">
+
+</div>
+  </header> 
+  <div class="post-content"><hr>
+<h1 id="attention-in-cv-学习笔记panoformer">attention in CV 学习笔记：PanoFormer<a hidden class="anchor" aria-hidden="true" href="#attention-in-cv-学习笔记panoformer">#</a></h1>
+<p>回顾一下ViT和Swin，可以发现图像中应用attention机制的一个很重要的部分就是patch，或者说token。ViT关注的是patch与patch之间的注意力，而Swin则利用了卷积的结构，将注意力机制放在了局部的patch的内部。因此，patch作为attention的基本单位，无疑具有很大的研究潜力。反过来思考一下，虽然swin及其变体通过patch内部的attention取得了很大的成功，但是patch的形态反而限制了attention的性能，我们可以通过改造patch来引入归纳偏置来帮助模型学习。</p>
+<h1 id="panoformer-panorama-transformer-for-indoor-360-depth-estimation">PanoFormer: Panorama Transformer for Indoor 360° Depth Estimation<a hidden class="anchor" aria-hidden="true" href="#panoformer-panorama-transformer-for-indoor-360-depth-estimation">#</a></h1>
+<ul>
+<li>论文地址：<a href="https://arxiv.org/abs/2203.09283">https://arxiv.org/abs/2203.09283</a></li>
+<li>参考代码：<a href="https://github.com/zhijieshen-bjtu/PanoFormer">https://github.com/zhijieshen-bjtu/PanoFormer</a></li>
+</ul>
+<h3 id="背景介绍">背景介绍<a hidden class="anchor" aria-hidden="true" href="#背景介绍">#</a></h3>
+<p>基于CNN的深度学习的方式在普通深度估计上取得了很好的效果。然而，如果要对全景照片进行深度估计，CNN效果就不是很好。这是由于全景照片是基于EPR进行投影过的，在图像的上下两端会造成非常巨大的形变。CNN在这种任务上有一种巨大的劣势：卷积的感受野是固定的，也就导致CNN只能螺蛳壳里做道场，被动地想办法去移除形变造成的影响，例如SphereNet。(虽然当时，我觉得SphereNet是一篇不错的工作)</p>
+<p>PanoFormer的作者则反其道而行之，为什么不能让算子来适配图片的形变呢，例如Deformable CNN。这就要求最好能够找到一种没有归纳偏置的算子，而Transformer就是一个很好的选择。因此，PanoFormer的核心思想就是，让Transformer去寻找一个非规则的patch然后计算attention。</p>
+<h3 id="如何选取patch">如何选取patch?<a hidden class="anchor" aria-hidden="true" href="#如何选取patch">#</a></h3>
+<p>本文的核心在于三点：</p>
+<ul>
+<li>pixel-level patch division strategy</li>
+<li>relative position embedding method</li>
+<li>panoramic self-attention mechanism</li>
+</ul>
+<p>ViT这种模型会直接把图片分成$16\times16$的patch，这样在全景图上会损失很多细节，不利于密集预测。所以文章采用的分割算法是与patch的中心位置相关的。在这篇文章中，作者采用了一个$3\times3$的patch，也就是8个pixels环绕中心pixel。所以整个patch可以定义为中心点的位置和中心点到其他八个点的相对位置。</p>
+<p>那么问题变成了，以知一个中心点位置和一张panorama，如何找到剩余8个点。由于panorama是从球面上投影到平面上的，所以我们在球面上的取得一个patch是近似没有变形的。因此，流程变为：</p>
+<ol>
+<li>将中心点投影回球面</li>
+<li>在球面上找以该点为中心的patch</li>
+<li>在patch上找8个对应点</li>
+<li>找到这8个点在panorama上的对应点</li>
+</ol>
+<p>球面为$S^2$，对于任一点$S_(x, y)=(\theta, \phi)$对其周围的8个点的定义为：
+$$
+S(\pm 1, 0)=(\theta\pm \Delta\theta, \phi)\\
+S(0, \pm1) = (\theta, \phi\pm\Delta\phi)\\
+S(\pm1, \pm1)=(\theta\pm\Delta\theta, \phi\pm\Delta\phi)
+$$
+上面是论文中给出的公式，但是我实际上觉得这里存在一点问题，水平方向的临近点不能简单的用$\theta$的加减表示，实际寻找应该发生在切平面上，按照下图所示。</p>
+<p><img loading="lazy" src="/src/panoformer_projection.png" alt=""  />
+</p>
+<p>按照这个方式，我们就可以得到许多非规则的patch的基础形状，之所以说是基础是因为网络在后面学习了一个$\Delta\theta$和$\Delta\phi$用于更精细的修正。有点DeformableCNN的感觉。我们可以构造出一个每个patch采样的基础位置函数$s$。</p>
+<h3 id="pst-block">PST Block<a hidden class="anchor" aria-hidden="true" href="#pst-block">#</a></h3>
+<p>网络模型如下所示，是一个很简单的U-Net结构。
+<img loading="lazy" src="/src/panoformer_model.png" alt=""  />
+</p>
+<p>可以观察到，最关键的结构就是PST Block这个东西。
+<img loading="lazy" src="/src/panoformer_pstblock.png" alt=""  />
+
+作者首先用LeFF替换了FFN。然后改造了multi-head attention结构。当一个$H\times W\times C$的特征图输入的时候，首先会展开$HW$成$N\times C(N=H\times W)$的形状，然后分别由全连接层生成$M(M=C/d)$个头的$Q\in\mathbb{R}^{N\times d}$和$V\in\mathbb{R}^{N\times d}$, $Q$经过一个全连接层得到$W\in\mathbb{R}^{N\times 9}$然后经由Softmax得到attention score $A$, 同理得到一个$\Delta s\in\mathbb{R}^{N\times 18}$。$\Delta s$也就是用于矫正patch选点位置的学习值。</p>
+<p>在得到了$s$和$\Delta s$之后，我们就可以根据$s+\Delta s$来在$V$上面采样了。对于每个头采样出来$H\times W$个patch每个patch包含9个点，可以理解为原本每个位置的特征深度变为原来的9倍。然后通过把patch和权重$A$矩阵相乘得到结果，和计算attention的原理一致，计算方法如下：
+$$
+\text{PSA}(f, \hat{s})=\sum^M_{m=1} W_m\times \left[\sum^{H\times W}<em>{q=1}\sum^9</em>{k=1}A_{mqk}\times W^{&rsquo;}<em>mf(\hat{s}</em>{mqk}+\Delta s_{mqk}) \right]
+$$
+解读一下上式，m代表某个head，q代表某个patch，k代表patch中的某个点。对于每个头之间都有权重$W_m$，在一个头的计算之中，首先需要遍历所有的$H\times W$和点，也就是遍历所有的patch来计算，然后patch之内还要遍历所有的9个点。$A_{mqk}$就是每个头的每个patch的每个点的权重，$f$是用于采样patch的函数。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2023 <a href="https://venite-xjc.github.io/blog/">Jetcat&#39;s Blog Site</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
