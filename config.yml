@@ -1,4 +1,4 @@
-baseURL : 'https://jetcat.site/blog/'
+baseURL : 'https://venite-xjc.github.io/blog/'
 languageCode : 'en-us'
 title : "Jetcat's Blog Site"
 theme : 'PaperMod'
