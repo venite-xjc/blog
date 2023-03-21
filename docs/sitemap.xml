@@ -2,31 +2,31 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://venite-xjc.github.io/posts/first-post/</loc>
+    <loc>https://venite-xjc.github.io/blog/posts/first-post/</loc>
     <lastmod>2023-01-26T01:50:11+08:00</lastmod>
   </url><url>
-    <loc>https://venite-xjc.github.io/</loc>
+    <loc>https://venite-xjc.github.io/blog/</loc>
     <lastmod>2023-01-26T01:50:11+08:00</lastmod>
   </url><url>
-    <loc>https://venite-xjc.github.io/posts/</loc>
+    <loc>https://venite-xjc.github.io/blog/posts/</loc>
     <lastmod>2023-01-26T01:50:11+08:00</lastmod>
   </url><url>
-    <loc>https://venite-xjc.github.io/posts/md4_swintransformer/</loc>
+    <loc>https://venite-xjc.github.io/blog/posts/md4_swintransformer/</loc>
     <lastmod>2022-11-26T01:50:11+08:00</lastmod>
   </url><url>
-    <loc>https://venite-xjc.github.io/posts/md3_vit/</loc>
+    <loc>https://venite-xjc.github.io/blog/posts/md3_vit/</loc>
     <lastmod>2022-11-26T01:50:11+08:00</lastmod>
   </url><url>
-    <loc>https://venite-xjc.github.io/posts/md1_attention_is_all_you_need/</loc>
+    <loc>https://venite-xjc.github.io/blog/posts/md1_attention_is_all_you_need/</loc>
     <lastmod>2022-11-26T01:50:11+08:00</lastmod>
   </url><url>
-    <loc>https://venite-xjc.github.io/posts/md2_non_local_gcnet/</loc>
+    <loc>https://venite-xjc.github.io/blog/posts/md2_non_local_gcnet/</loc>
     <lastmod>2022-11-26T01:50:11+08:00</lastmod>
   </url><url>
-    <loc>https://venite-xjc.github.io/posts/md5_panoformer/</loc>
+    <loc>https://venite-xjc.github.io/blog/posts/md5_panoformer/</loc>
   </url><url>
-    <loc>https://venite-xjc.github.io/categories/</loc>
+    <loc>https://venite-xjc.github.io/blog/categories/</loc>
   </url><url>
-    <loc>https://venite-xjc.github.io/tags/</loc>
+    <loc>https://venite-xjc.github.io/blog/tags/</loc>
   </url>
 </urlset>
