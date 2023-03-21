@@ -45,17 +45,17 @@ S(\pm1, \pm1)=(\theta\pm\Delta\theta, \phi\pm\Delta\phi)
 $$
 上面是论文中给出的公式，但是我实际上觉得这里存在一点问题，水平方向的临近点不能简单的用$\theta$的加减表示，实际寻找应该发生在切平面上，按照下图所示。
 
-![](/src/panoformer_projection.png)
+![](/blog/src/panoformer_projection.png)
 
 按照这个方式，我们就可以得到许多非规则的patch的基础形状，之所以说是基础是因为网络在后面学习了一个$\Delta\theta$和$\Delta\phi$用于更精细的修正。有点DeformableCNN的感觉。我们可以构造出一个每个patch采样的基础位置函数$s$。
 
 ### PST Block
 
 网络模型如下所示，是一个很简单的U-Net结构。
-![](/src/panoformer_model.png)
+![](/blog/src/panoformer_model.png)
 
 可以观察到，最关键的结构就是PST Block这个东西。
-![](/src/panoformer_pstblock.png)
+![](/blog/src/panoformer_pstblock.png)
 作者首先用LeFF替换了FFN。然后改造了multi-head attention结构。当一个$H\times W\times C$的特征图输入的时候，首先会展开$HW$成$N\times C(N=H\times W)$的形状，然后分别由全连接层生成$M(M=C/d)$个头的$Q\in\mathbb{R}^{N\times d}$和$V\in\mathbb{R}^{N\times d}$, $Q$经过一个全连接层得到$W\in\mathbb{R}^{N\times 9}$然后经由Softmax得到attention score $A$, 同理得到一个$\Delta s\in\mathbb{R}^{N\times 18}$。$\Delta s$也就是用于矫正patch选点位置的学习值。
 
 在得到了$s$和$\Delta s$之后，我们就可以根据$s+\Delta s$来在$V$上面采样了。对于每个头采样出来$H\times W$个patch每个patch包含9个点，可以理解为原本每个位置的特征深度变为原来的9倍。然后通过把patch和权重$A$矩阵相乘得到结果，和计算attention的原理一致，计算方法如下：

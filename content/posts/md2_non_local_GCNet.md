@@ -98,7 +98,7 @@ $$
 然后考虑给$y_i$加上一个线性变换，相当于Multi-head Attention block 里面的Feed Forward Networks部分，然后加上残差连接，最终输出$$z_i=W_zy_i+x_i$$残差连接使得non-local block可以插入任何网络而不改变网络的表现。
 
 下图是一个non-local block，可以看到它的基本形式与self-attention block没有差异，只是把全连接层换成了卷积层，然后没有包括layerNorm。我们从后来者的角度可以看出来，这个block的优化空间还是蛮大的，比如他没有借鉴到self-attention的LayerNorm和Position Encoding，没有用到我们后来熟悉的patch，以及计算复杂度还有很大的优化空间。
-![](/src/non-local_block.png)
+![](/blog/src/non-local_block.png)
 
 
 ## 实验部分
@@ -130,7 +130,7 @@ $$
 
 另外一点，作者经过实验发现，non-local block中，对于不同的query点，所产生的注意力图都是几乎一样的,如下图所示。
 
-![红点是query点，注意力图基本看不出来差别](/src/attention_map.png)
+![红点是query点，注意力图基本看不出来差别](/blog/src/attention_map.png)
 
 这个事情就很有意思了，说明对于non-local来说，query是不必要的，因为query是啥根本不影响注意力图。同时，non-local能够很好地找到全局的注意力图，也就是一整张图片上面最值得关注的部分。作者对non-local的量化分析如下：
 
@@ -148,7 +148,7 @@ $$
 采用JS散度$dist(\boldsymbol{v_i}, \boldsymbol{v_j})=\frac{1}{2}\sum_{k=1}^{N_p}\left(v_{ik}log\frac{2v_{ik}}{v_{ik}+v_{jk}}+v_{jk}log\frac{2v_{jk}}{v_{ik}+v_{jk}}\right)$计算attention map之间的差别。
 
 最终结果如下表：
-![](/src/non-local_analysis.png)
+![](/blog/src/non-local_analysis.png)
 
 表的最后两列发现，non-local的输入之间还是具有很大差别的，但是经过non-local计算出来还没有融合进去的部分差别非常小，同时余弦相似度和JS散度计算出来的attention map之间的差别也很小。经过数据分析坐实了non-local的query几乎没有作用。
 
@@ -158,7 +158,7 @@ $$
 
 ## 从 non-local block 到 global context block
 
-![](/src/arch_of_blocks.png)
+![](/blog/src/arch_of_blocks.png)
 
 第一步，由于query不起作用，说明$W_k$可以直接得到全局注意力，我们在embedde-Gaussian的基础上只采用$W_k$就够了，non-local变成了
 $$
@@ -170,17 +170,17 @@ $$
 z_i=x_i+W_v\sum^{N_p}_{j=1}\frac{e^{W_kx_j}}{\sum^{N_p}_{m=1}e^{W_kx_m}}x_j
 $$
 
-![](/src/non-local_arch12.png)
+![](/blog/src/non-local_arch12.png)
 
 如上图的(b)所示。
 
 现在回顾一下，由于我们并不考虑query的作用，所以对于每个position的，实际上生成的是一样的$1\times 1\times C$的向量，这个向量是由所有向量的加权和得来的。换句话说，相当于对输入的每个channel做了一个**带权值的global pooling操作**……等等，这个操作，很难不让人想到SE block的结构啊!
 
-![](/src/SEblock.png)
+![](/blog/src/SEblock.png)
 
 毕竟SENet就是通过一个global pooling捕获每个channel的全局关系的。那来都来了，为什么不直接采用SE block后面的线性变换呢，反正SE block是非常轻量的，前面已经算过了pixel attention，后面还能接着算channel attention。顺着这个思想，作者将Simplified NL block的Transformer改成了squeeze-excitation的结构，并且加上了LayerNorm来帮助模型优化，图与公式表达如下：
 
-![](/src/GCblock.png)
+![](/blog/src/GCblock.png)
 
 $$
 z_i=x_i+W_{v2}\text{ReLU}\left(\text{LN}\left(W_{v1}\sum\limits_{j=1}^{N_p}\frac{e^{W_kx_j}}{\sum\limits_{m=1}^{N_p}e^{W_kx_m}}\right)\right)

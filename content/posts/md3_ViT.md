@@ -49,7 +49,7 @@ Transformer针对这个问题采用的就是**划分patch**的方法，把patch�
 
 ViT的Encoder和标准的Transformer的Encoder基本没有区别，Feed Forward Networks采用了一个双层的GELU激活的MLP，其中Decoder直接采用了一个MLP分类头，因为这个任务比较简单。整体架构如下图：
 
-![](/src/ViT.png)
+![](/blog/src/ViT.png)
 
 在训练中，通常在预训练时期采用较低分辨率，在fine-tune时期采用较高分辨率。这时候如果保持patch的size不变，就会产生更长的序列，但是更长的序列的position是没有意义的。比如预训练的时候最长为196，然后fine-tune的时候长度到了256，Transformer是学习不到后面197~256的position的意义的。作者这里采用了2D的插值，把position都缩放到预训练的长度范围中。
 
@@ -69,25 +69,25 @@ ViT的Encoder和标准的Transformer的Encoder基本没有区别，Feed Forward 
 
 作者采用的预训练数据集分别为：JFT(18k classes, 303M images)、ImageNet-21k(21k classes, 14M images)、ImageNet(1k classes, 1.3M images)
 
-![](/src/ViT_classification.png)
+![](/blog/src/ViT_classification.png)
 在分类任务上，对比BiT-L和Noisy Student, 在Image-21k上预训练的ViT并没有超过BiT-L，但是在JFT上预训练的两个大模型都达到或者超过了BiT-L。并且预训练的算力消耗更小，只需要TPU-v3训练“区区2500天”而已。
 
-![](/src/ViT_breakdown.png)
+![](/blog/src/ViT_breakdown.png)
 在VTAB任务上，基本也是差不多的结果，超大规模预训练的ViT-H/14横扫战场。
 
 分析这两个实验，作者发现在JFT数据集上预训练的ViT表现明显好于其他的ViT,这说明预训练数据集对Transformer至关重要。为了验证，作者接着做了两个实验。第一个是在不同数据集上预训练，然后再ImageNet上面fine-tune的结果：
 
-![](/src/ViT_imagenet_finetune.png)
+![](/blog/src/ViT_imagenet_finetune.png)
 在ImageNet上训练，Vit还打不过ResNet(BiT)；在ImageNet-21k上预训练，虽然ViT涨点了，但是不同大小的ViT性能仍然拉不开差距；在JFT上预训练，就能够很明显发现大模型的优势。
 
 第二个实验是随机选取部分JFT图像做预训练，然后在ImageNet上fune-tune
-![](/src/ViT_sample.png)
+![](/blog/src/ViT_sample.png)
 ResNet在较小预训练集上表现优于Transformer，在大预训练集上表现不如ViT；同时依然可以得出结论：越大的ViT性能越好。
 
 在训练数据是饱和的情况下，对于不同大小的模型，实验结果如下：
-![](/src/ViT_modelsize.png)
+![](/blog/src/ViT_modelsize.png)
 在相同计算费用的情况下，ViT表现优于ResNet。这里说一下实验中的Hybrid，指的就是把ViT的patches换成先经过CNN处理过的feature map，杂交了两个模型。Hybrid开始表现优于Transformer，但是在大参数量的情况下Transformer成功反超。观察数据还可以发现一点，Transformer不会随着参数量的增加而性能饱和，这是很重要的一个结论。
 
 文章最后对ViT做了一个检测的实验：
-![](/src/ViT_analysis.png)
+![](/blog/src/ViT_analysis.png)
 左图代表ViT最开始把patch变成低维向量的线性映射的filter,类似基函数。中间的图片代表position embedding之间的余弦相似度，可以很明显的观察出来，对于某个位置的position embedding，与它最相似的是和它同行以及同列的position embedding，并且物理距离越远余弦相似度越低，说明position encoding确实学到了位置信息。最右边是在不同深度的block中，multi-head attention所关联的patch的距离，可以发现在开始的时候self-attention既关联到了距离很近的patch，也关联到了距离很远的patch，底层的全局注意力很丰富。深度越深，学到的距离越远，说明long-range在ViT的后面发挥了很重要的作用。

@@ -28,7 +28,7 @@ Swin Transformer解决的方法：
 2. 采用层级结构。
 3. 采用shift-window打通不同的window之间的信息。(模型的名字就来自**s**hift-**win**dow)
 
-![](/src/swin_vit.png)
+![](/blog/src/swin_vit.png)
 
 左图是Swin Transformer的结构，把图像划分为patch，对在同一window之类的patch计算attention，然后通过合并patch降低分辨率，不断重复操作。右图是ViT的结构，把图像划分为patch，然后始终在所有patch之间做self-attention。
 
@@ -36,7 +36,7 @@ Swin Transformer解决的方法：
 
 ## Swin主要结构
 
-![](/src/swin_archtecture.png)
+![](/blog/src/swin_archtecture.png)
 
 参照上图，因为Transformer操作的基本单位都是patch，所以Swin Transformer也是首先进行patch partition，文中采用的是4×4的大小。这样一个patch就会包含4×4×3=48的维度，经过linear embedding layer把维度投影到C，分辨率变为$\frac{H}{4}\times\frac{W}{4}$。然后会经过两个Swin Transformer Block计算注意力。这个过程属于上图的stage1。
 
@@ -61,15 +61,15 @@ Window based Self-Attention前面得到QKV的过程和最后的线性变换和se
 
 所以Window based Self-Attention复杂度一共为$4hwC^2+2M^2hwC$。
 
-![](/src/W-MSA.png)
+![](/blog/src/W-MSA.png)
 
 由于划分window的方法虽然能够降低计算复杂度，但是相当于破坏了attention的全局性，计算局限于window中，为了打破不同window之间的壁垒，作者采用了shift-window的方法。具体来说，就是把window移动$(\lfloor\frac{M}{2}\rfloor, \lfloor\frac{M}{2}\rfloor)$之后重新划分。参见下图：
 
-![](/src/shift-window.png)
+![](/blog/src/shift-window.png)
 
 但是这样会带来问题，第一是window的个数由原来的4个变成了9个，第二是window中的patch数量不固定，所以作者采用了efficient batch computation的方法，如下图:
 
-![](/src/Efficient_batch_computation.png)
+![](/blog/src/Efficient_batch_computation.png)
 
 其实也就是通过类似circular padding的方式把不完整的几个window给补全。
 
@@ -91,7 +91,7 @@ z^l = MLP(LN(\hat{z}^l))+\hat{z}^l,\\\
 \hat{z}^{l+1} = SW-MSA(LN(z^l))+z^l,\\\
 z^{l+1} = MLP(LN(\hat{z}^{l+1}))+\hat{z}^{l+1},
 $$
-![](/src/swin_archtecture.png)
+![](/blog/src/swin_archtecture.png)
 
 ## 代码复现
 
@@ -325,16 +325,16 @@ SwinTransformerBlock：
 
 ## 实验结论
 
-![](/src/swin_classification.png)
+![](/blog/src/swin_classification.png)
 在分类任务上，Swin表现大幅超过其他模型。在Image-21k预训练的结果也是更好。
 
-![](/src/swin_object_detection.png)
+![](/blog/src/swin_object_detection.png)
 在目标检测任务上，效果也是非常好。
 
-![](/src/swin_segmentation.png)
+![](/blog/src/swin_segmentation.png)
 swin实现了在这种dense prediction任务上采用Transformer的backbone，效果也是大幅超越其他模型。
 
-![](/src/swin_pos.png)
+![](/blog/src/swin_pos.png)
 关于shift-window以及relative position bias的消融实验。有了这两个东西都可以涨点。
 
 值得一提的是，作者后面把Swin的架构用到MLP-Mixer上面，发现了效果也很好，说明Swin的结构是具有通用性的。但是这是不是也说明了Swin的结构中，Transformer的地位其实没有那么高呢，我个人感觉Swin其实融合了很多文章的trick，比如滑动窗口也是一些CNN在用的提速方法，所以Swin刚出来的时候其实有很多质疑的声音。但是不得不说Swin作为通用backbone的地位非常高，我拿这个backbone也在某个workshop上干到过第二（虽然后面掉了），Transformer的潜力还是很大的。

@@ -49,7 +49,7 @@ $$\text{Attention}(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
 这个公式在Transformer领域也算大名鼎鼎了，看起来很复杂，其实只是把很多个$\vec q$拼接成一个矩阵，相当于刚刚那一系列键值对和很多个$\vec q$做这个attention，$Q=\begin{pmatrix}q_1\\\ q_2\\\ ...\\\ q_n\end{pmatrix}，K=\begin{pmatrix}k_1\\\ k_2\\\ ...\\\ k_n\end{pmatrix}，V=\begin{pmatrix}v_1\\\ v_2\\\ ...\\\ v_n\end{pmatrix}$。
 
-![](/src/attention.png)
+![](/blog/src/attention.png)
 
 接下来的问题是关键了。
 
@@ -129,7 +129,7 @@ Q, K, V都是由X分别经过某种映射计算来的，为什么不直接采用
 
 ## multi-head attention
 
-![](/src/multi_head_attention.png)
+![](/blog/src/multi_head_attention.png)
 
 所谓的multi-head attention其实就是把多个attention结合起来让模型学的更好。之前提到过QKV的生成是靠的X映射，现在把这个映射用线性变换代替了。只要我采用不同的线性变换，我就可以生成不同的QKV，算出不同的结果，增强模型的学习能力。
 
@@ -189,7 +189,7 @@ $$
 
 position embedding是Transformer中不可或缺的组件。根据上面的分析我们知道了self-attention是如何引入全局知识的，很明显可以观察到一点，如果我把不同的token换个位置，好像并不会影响到self-attention的结果。但是对于实际的学习而言相对位置需要对attention有影响，举个例子：“I really want to stay at your house”和“痛，太痛了”如果放在一个句子里面，我们可以认为它们相关性很强；但是如果两个在不同的句子里面，我们就认为这两个之间的关联性没有那么强。所以额外给Transformer引入position是非常重要的。
 
-![痛，太痛了！](/src/cyberpunk_edgerunner.webp )
+![痛，太痛了！](/blog/src/cyberpunk_edgerunner.webp )
 
 
 那么怎么引入呢？方法很简单粗暴，就是造一个跟输入一样大小的矩阵，矩阵每个位置的值就是这个位置的编码，然后把它跟输入加起来（embedding）.
@@ -243,11 +243,11 @@ $$
 
 ## Transformer架构分析
 
-![](/src/Transformer.webp)
+![](/blog/src/Transformer.webp)
 
 Transformer主要分为Encoder和Decoder两个部分组成，本质上是一个seq2seq模型，两个的区别在于Encoder的每一层只会使用上一层的信息，而Decoder的每一层除了使用上一层的输出之外还是使用了Encoder的输出，最大化利用了Encoder的深层编码信息，整个模型并不复杂，但是有些NLP方向的知识我并不了解，所以对模型细节我就不妄言了。
 
-![](/src/Transformer.png)
+![](/blog/src/Transformer.png)
 
 观察这两个结构可以很明显的看出有一个block复用的频率很高，这是一个由Position Encoding到Normalization的部分，其中最关键的部分就是一个多头注意力模块。
 
